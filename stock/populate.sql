@@ -1,0 +1,45 @@
+INSERT INTO supply VALUES (1, 1, 1, 200);
+INSERT INTO supply VALUES (1, 1, 4, 700);
+INSERT INTO supply VALUES (2, 3, 1, 400);
+INSERT INTO supply VALUES (2, 3, 2, 200);
+INSERT INTO supply VALUES (2, 3, 3, 200);
+INSERT INTO supply VALUES (2, 3, 4, 500);
+INSERT INTO supply VALUES (2, 3, 5, 600);
+INSERT INTO supply VALUES (2, 3, 6, 400);
+INSERT INTO supply VALUES (2, 3, 7, 800);
+INSERT INTO supply VALUES (2, 5, 2, 100);
+INSERT INTO supply VALUES (3, 3, 1, 200);
+INSERT INTO supply VALUES (3, 4, 2, 500);
+INSERT INTO supply VALUES (4, 6, 3, 300);
+INSERT INTO supply VALUES (4, 6, 7, 300);
+INSERT INTO supply VALUES (5, 2, 2, 200);
+INSERT INTO supply VALUES (5, 2, 4, 100);
+INSERT INTO supply VALUES (5, 5, 5, 500);
+INSERT INTO supply VALUES (5, 5, 7, 100);
+INSERT INTO supply VALUES (5, 6, 2, 200);
+INSERT INTO supply VALUES (5, 1, 4, 1000);
+INSERT INTO supply VALUES (5, 3, 4, 1200);
+INSERT INTO supply VALUES (5, 4, 4, 800);
+INSERT INTO supply VALUES (5, 5, 4, 400);
+INSERT INTO supply VALUES (5, 6, 4, 500);
+
+INSERT INTO part VALUES (1, 'Nut', 'Red', 12, 'Londres');
+INSERT INTO part VALUES (2, 'Bolt', 'Green', 17, 'Paris');
+INSERT INTO part VALUES (3, 'Screw', 'Blue', 17, 'Roma');
+INSERT INTO part VALUES (4, 'Screw', 'Red', 14, 'Londres');
+INSERT INTO part VALUES (5, 'Cam', 'Blue', 12, 'Paris');
+INSERT INTO part VALUES (6, 'Cog', 'Red', 19, 'Londres');
+
+INSERT INTO project VALUES (1, 'Sorter', 'Paris');
+INSERT INTO project VALUES (2, 'Punch', 'Roma');
+INSERT INTO project VALUES (3, 'Reader', 'Atenas');
+INSERT INTO project VALUES (4, 'Console', 'Atenas');
+INSERT INTO project VALUES (5, 'Collator', 'Londres');
+INSERT INTO project VALUES (6, 'Terminal', 'Oslo');
+INSERT INTO project VALUES (7, 'Tape', 'Londres');
+
+INSERT INTO supplier VALUES (1, 'Smith', 20, 'Londres');
+INSERT INTO supplier VALUES (2, 'Jones', 10, 'Paris');
+INSERT INTO supplier VALUES (3, 'Blake', 20, 'Paris');
+INSERT INTO supplier VALUES (4, 'Clark', 20, 'Londres');
+INSERT INTO supplier VALUES (5, 'Adams', 20, 'Atenas');
