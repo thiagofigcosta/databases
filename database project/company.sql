@@ -9,6 +9,7 @@
 
 --- trigger de validacao pre insercao do invoice 
 
+--- verficar se tabelas e procedures existem antes de criar (creat if no exists)
 --- testar e corrigir erros
 --- script de povoamento
 --- query para calcular kilometragem do veiculo da empresa
