@@ -1,6 +1,4 @@
 -- TODO
---- fazer tabelas de transporte
---- fazer transport type na mission
 --- quando modificar a tabela de funcionarios da missao, desaprova-la
 --- verficar se há algum feriado do funcionario dentro do intervalo da missao ao adiciona-lo
 
@@ -158,6 +156,59 @@ CREATE TABLE car_maintenance (
 	description TEXT
 );
 ALTER TABLE cars_maintenance ADD CONSTRAINT FK_carmaintenance_car FOREIGN KEY(id_car) REFERENCES car(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+
+CREATE SEQUENCE SQ_PLANETRANSPORT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE plane_transport (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_PLANETRANSPORT_PK'),
+    id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+    company_name VARCHAR(20) NOT NULL,
+    ticket_ref VARCHAR(12) NOT NULL,
+    flight_number VARCHAR(12) NOT NULL,
+    seat_number VARCHAR(12) NOT NULL,
+    departure_at TIMESTAMP NOT NULL,
+    arrival_at TIMESTAMP NOT NULL
+);
+ALTER TABLE plane_transport ADD CONSTRAINT FK_planetransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE SEQUENCE SQ_TRAINTRANSPORT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE train_transport (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_TRAINTRANSPORT_PK'),
+    id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+    company_name VARCHAR(20) NOT NULL,
+    ticket_ref VARCHAR(12) NOT NULL,
+    train_number VARCHAR(12) NOT NULL,
+    seat_number VARCHAR(12) NOT NULL,
+    departure_at TIMESTAMP NOT NULL,
+    arrival_at TIMESTAMP NOT NULL
+);
+ALTER TABLE train_transport ADD CONSTRAINT FK_traintransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE SEQUENCE SQ_CARRENTALTRANSPORT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE car_rental_transport (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_CARRENTALTRANSPORT_PK'),
+    id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+    company_name VARCHAR(20) NOT NULL,
+    rental_ref VARCHAR(12) NOT NULL,
+    car_reg VARCHAR(12) NOT NULL,
+    departure_at TIMESTAMP NOT NULL,
+    arrival_at TIMESTAMP NOT NULL,
+);
+ALTER TABLE car_rental_transport ADD CONSTRAINT FK_carrentaltransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+CREATE SEQUENCE SQ_SERVICECARTRANSPORT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE service_car_transport (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_SERVICECARTRANSPORT_PK'),
+    id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+    id_car INTEGER NOT NULL,
+    km_driven INTEGER NOT NULL,
+    departure_at TIMESTAMP NOT NULL,
+    arrival_at TIMESTAMP NOT NULL,
+);
+ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+
 
 
 -- DEFINE TRIGGER
