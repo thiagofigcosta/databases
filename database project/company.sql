@@ -1,5 +1,4 @@
 -- TODO
---- diagrama entidade relacionamento
 --- modelo logico (aquele que parece com o sql, 1 linha por tabela)
 
 
