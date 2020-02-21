@@ -2,12 +2,11 @@
 --- query para calcular kilometragem do veiculo da empresa
 --- scripts de visualizacao 
 --- scripts de modificacao
---- fazer comentarios nos scripts como documentacao para a teacher
 --- diagrama entidade relacionamento
 --- modelo logico (aquele que parece com o sql, 1 linha por tabela)
 
 
-CREATE SEQUENCE IF NOT EXISTS SQ_ADDRESS_PK INCREMENT BY 1 START WITH 1;
+CREATE SEQUENCE IF NOT EXISTS SQ_ADDRESS_PK INCREMENT BY 1 START WITH 1; -- auto incrementer
 CREATE TABLE IF NOT EXISTS address(
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_ADDRESS_PK'),
 	street VARCHAR(64) NOT NULL, 
@@ -21,7 +20,7 @@ CREATE TABLE IF NOT EXISTS address(
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_COUNTRY_PK INCREMENT BY 1 START WITH 1;
-CREATE TABLE IF NOT EXISTS country (
+CREATE TABLE IF NOT EXISTS country ( -- to avoid same countries to have diffent names (brazil, Brazil, brasil, BRASIL), should be done on more columns over the schema
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_COUNTRY_PK'),
 	name VARCHAR(50) NOT NULL UNIQUE
 );
@@ -39,7 +38,7 @@ CREATE TABLE IF NOT EXISTS staff (
 	admitted_at TIMESTAMP NOT NULL,
 	fired_at TIMESTAMP,
 	emergency_phone VARCHAR (16) NOT NULL,
-	constraint CK_staff_class check (class in (	'E',  -- employee
+	constraint CK_staff_class check (class in (	'E',  -- employee      -- avoid invalid chars
 												'H',  -- department head
 												'D',  -- director
 												'A')) -- system admin
@@ -50,33 +49,30 @@ CREATE TABLE IF NOT EXISTS staff_holidays (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_STAFFHOLIDAYS_PK'),
 	id_staff INTEGER NOT NULL,
 	holiday DATE NOT NULL,
-	UNIQUE(id_staff,holiday)
+	UNIQUE(id_staff,holiday) -- avoid redundancy
 );
 
-
-
 CREATE SEQUENCE IF NOT EXISTS SQ_DEPARTMENT_PK INCREMENT BY 1 START WITH 1;
-CREATE TABLE IF NOT EXISTS department ( -- "service"
+CREATE TABLE IF NOT EXISTS department ( -- "service" seams like a job, department is more appropriate
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_DEPARTMENT_PK'),
-	name VARCHAR(32) NOT NULL UNIQUE,
-	email VARCHAR(56) NOT NULL UNIQUE,
+	name VARCHAR(32) NOT NULL UNIQUE, -- must be unique
+	email VARCHAR(56) NOT NULL UNIQUE, -- must be unique, very hard to find email larger than 56
 	id_address INTEGER NOT NULL,
 	id_manager INTEGER NOT NULL,
 	id_assistant INTEGER NOT NULL
 );
 
-
-CREATE TABLE IF NOT EXISTS department_workers (
+CREATE TABLE IF NOT EXISTS department_workers ( -- doesnt need to have id, but it could have to optimize results
 	id_staff INTEGER NOT NULL,
 	id_department INTEGER NOT NULL,
-	PRIMARY KEY(id_staff, id_department)
+	PRIMARY KEY(id_staff, id_department) -- composite PK
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_AUTORISATION_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS autorisation (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_AUTORISATION_PK'),
 	status VARCHAR(1) NOT NULL,
-	checked_at TIMESTAMP,
+	checked_at TIMESTAMP, -- timestamps are very important on business databases, we should have more stamps and more historical data on a real scenario
 	id_checker_staff INTEGER,
 	constraint CK_status check (status in (	'H',  -- on hold
 											'V',  -- validated
@@ -90,17 +86,17 @@ CREATE TABLE IF NOT EXISTS mission (
 	start_at TIMESTAMP NOT NULL,
 	end_at TIMESTAMP NOT NULL,
 	name VARCHAR(32) NOT NULL,
-	description TEXT NOT NULL,
+	description TEXT NOT NULL, -- to allow huge texts
 	id_dst_address INTEGER NOT NULL,
 	id_department INTEGER NOT NULL,
-	id_autorisation INTEGER UNIQUE,
-	constraint CK_dates check (start_at<end_at)
+	id_autorisation INTEGER UNIQUE, -- avoid 2 missions to have same autorization
+	constraint CK_dates check (start_at<end_at) -- avoid non-sense data
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_MISSIONCOSTS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS mission_costs (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_MISSIONCOSTS_PK'),
-	cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+	cost DECIMAL(12,2) NOT NULL DEFAULT 0, -- this data type is recomended for money
 	description VARCHAR(300) NOT NULL,
 	comments VARCHAR(300),
 	id_mission INTEGER NOT NULL,
@@ -111,12 +107,12 @@ CREATE SEQUENCE IF NOT EXISTS SQ_INVOICE_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS invoice (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_INVOICE_PK'),
 	id_mission_cost INTEGER NOT NULL,
-	attachment_path VARCHAR(64) NOT NULL UNIQUE,
+	attachment_path VARCHAR(64) NOT NULL UNIQUE, -- path to invoice comprovation, must be implemented on application to save the file and store the path
 	comments VARCHAR(300),
-	id_autorisation INTEGER UNIQUE
+	id_autorisation INTEGER UNIQUE -- avoid 2 missions to have same autorization
 );
 
-CREATE TABLE IF NOT EXISTS mission_staff (
+CREATE TABLE IF NOT EXISTS mission_staff ( -- to allow several employees on the same mission
 	id_mission INTEGER NOT NULL,
 	id_staff INTEGER NOT NULL,
 	PRIMARY KEY (id_mission,id_staff)
@@ -127,7 +123,7 @@ CREATE TABLE IF NOT EXISTS cars (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_CARS_PK'),
 	brand VARCHAR(15) NOT NULL,
 	model VARCHAR(15) NOT NULL,
-	chassis VARCHAR(17) NOT NULL UNIQUE,
+	chassis VARCHAR(17) NOT NULL UNIQUE, -- chassis have always 17 chars 
 	license_plate VARCHAR(10) NOT NULL UNIQUE,
 	insurance_number VARCHAR(15) NOT NULL UNIQUE
 );
@@ -143,7 +139,7 @@ CREATE TABLE IF NOT EXISTS car_maintenance (
 CREATE SEQUENCE IF NOT EXISTS SQ_PLANETRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS plane_transport (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_PLANETRANSPORT_PK'),
-	id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+	id_mission_cost INTEGER NOT NULL, -- cost related to the transport are inside mission cost table
 	company_name VARCHAR(20) NOT NULL,
 	ticket_ref VARCHAR(12) NOT NULL,
 	flight_number VARCHAR(12) NOT NULL,
@@ -157,7 +153,7 @@ CREATE TABLE IF NOT EXISTS plane_transport (
 CREATE SEQUENCE IF NOT EXISTS SQ_TRAINTRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS train_transport (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_TRAINTRANSPORT_PK'),
-	id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+	id_mission_cost INTEGER NOT NULL,
 	company_name VARCHAR(20) NOT NULL,
 	ticket_ref VARCHAR(12) NOT NULL,
 	train_number VARCHAR(12) NOT NULL,
@@ -170,11 +166,11 @@ CREATE TABLE IF NOT EXISTS train_transport (
 CREATE SEQUENCE IF NOT EXISTS SQ_CARRENTALTRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS car_rental_transport (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_CARRENTALTRANSPORT_PK'),
-	id_mission_cost INTEGER NOT NULL, -- cost related to this transport
+	id_mission_cost INTEGER NOT NULL, 
 	company_name VARCHAR(20) NOT NULL,
 	rental_ref VARCHAR(12) NOT NULL,
 	car_reg VARCHAR(12) NOT NULL,
-	rented_at TIMESTAMP NOT NULL,
+	rented_at TIMESTAMP NOT NULL, -- instead of departure and arrival, it's better to put rent and return date
 	returned_at TIMESTAMP NOT NULL,
 	constraint CK_rental_dates check (rented_at<returned_at)
 );
@@ -186,12 +182,12 @@ CREATE TABLE IF NOT EXISTS service_car_transport (
 	id_mission_cost INTEGER NOT NULL, -- cost related to this transport
 	id_car INTEGER NOT NULL,
 	km_driven FLOAT NOT NULL,
-	withdrawal_at TIMESTAMP NOT NULL,
+	withdrawal_at TIMESTAMP NOT NULL, -- same as rent cars, but with the company cars
 	returned_at TIMESTAMP NOT NULL,
 	constraint CK_car_dates check (withdrawal_at<returned_at)
 );
 
-
+-- below the foreign keys
 ALTER TABLE address ADD CONSTRAINT FK_address_country FOREIGN KEY(id_country) REFERENCES country(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE staff ADD CONSTRAINT FK_staff_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -231,78 +227,73 @@ ALTER TABLE car_rental_transport ADD CONSTRAINT FK_carrentaltransport_missioncos
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-
--- DEFINE TRIGGER
-CREATE OR REPLACE FUNCTION department_validation()
-	RETURNS TRIGGER AS $$
-DECLARE
+-- TRIGGERS
+CREATE OR REPLACE FUNCTION department_validation() -- define the trigger function
+	RETURNS TRIGGER AS $$ -- $$ is the separator (can be anything), this means a sort of 'BEGIN'
+DECLARE -- define some variables to store data
 _manager_class varchar(1);
 _manager_fired_date timestamp;
 _assistant_fired_date timestamp;
 BEGIN
-	SELECT S.class,S.fired_at INTO _manager_class, _manager_fired_date
+	SELECT S.class,S.fired_at INTO _manager_class, _manager_fired_date -- filling the variables
 	FROM staff S
-	WHERE S.id = NEW.id_manager -- NEW = new record, OLD = previous record
+	WHERE S.id = NEW.id_manager -- NEW refers to new record or the the update values, OLD refers to previous record value (if it's INSERT instead of UPDATE, OLD==null)
 	LIMIT 1;
 
-	SELECT S.fired_at INTO _assistant_fired_date
+	SELECT S.fired_at INTO _assistant_fired_date -- filling the variables
 	FROM staff S
 	WHERE S.id = NEW.id_assistant
 	LIMIT 1;
 
-	IF (_manager_class IN ('H', 'D', 'A') ) AND (_manager_fired_date IS NULL) AND (_assistant_fired_date IS NULL)
+	IF (_manager_class IN ('H', 'D', 'A') ) AND (_manager_fired_date IS NULL) AND (_assistant_fired_date IS NULL) -- check approval permissions, and if the approver still works on the company
 	THEN
-		RETURN NEW;
+		RETURN NEW; -- this allows the INSERT or UPDATE to occour
 	END IF;
-	RAISE EXCEPTION 'Invalid manager or assistant in department(id:%)!', NEW.id;
+	RAISE EXCEPTION 'Invalid manager or assistant in department(id:%)!', NEW.id; -- exception cancels the INSERT or UPDATE and returns the error
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql; -- 'END' and especification of the procedure language
 
--- BIND TRIGGER
-CREATE TRIGGER TR_department_validation 
-BEFORE INSERT OR UPDATE ON department 
+CREATE TRIGGER TR_department_validation --  create the trigger on the table and bind the function to it
+BEFORE INSERT OR UPDATE ON department  -- must execute BEFORE INSERT or UPDATE
 FOR EACH ROW EXECUTE PROCEDURE department_validation();
 
-
--- DEFINE TRIGGER
 CREATE OR REPLACE FUNCTION mission_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
 _approval_status varchar(1);
 _approver_class varchar(1);
 _approver_fired_date timestamp;
-_has_head_working boolean = False;
+_has_head_working boolean = False; -- declaring with start value false
 _checked_at timestamp;
 _id_checker_staff integer;
-row record;
+row record; -- we need to declare this as well to use as iterator on LOOP
 BEGIN
-	IF (NEW.id_autorisation IS NULL)
+	IF (NEW.id_autorisation IS NULL) -- another way to do "NOT NULL", but instead of raising error it creates a default entry on the other table for it
 	THEN
-		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation;
+		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation; -- create the entry and put its id value on the id_autorisation FK field
 	END IF;
 
-	SELECT A.checked_at,A.id_checker_staff,A.status INTO _checked_at, _id_checker_staff, _approval_status
+	SELECT A.checked_at,A.id_checker_staff,A.status INTO _checked_at, _id_checker_staff, _approval_status -- filling the variables, getting the approval status
 	FROM autorisation A
 	WHERE A.id = NEW.id_autorisation 
 	LIMIT 1;
 
-	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date
+	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date -- filling the variables
 	FROM staff S
 	WHERE S.id = _id_checker_staff
 	LIMIT 1;
 
-	-- check if mission has department head
-	FOR row IN
-	SELECT S.class FROM mission_staff M INNER JOIN staff S ON M.id_staff=S.id WHERE M.id_mission=NEW.id
+	FOR row IN -- check if mission has department head working on it, if it has, the mission must be approved at least by a director
+	SELECT S.class FROM mission_staff M INNER JOIN staff S ON M.id_staff=S.id WHERE M.id_mission=NEW.id -- it iterates over this query results
 	LOOP
 		IF row.class = 'H'
 		THEN
 			_has_head_working=True;
-			EXIT; -- breaks the loop
+			EXIT; -- breaks the loop to save processing time
 		END IF;
 	END LOOP;
 
-	IF (_approval_status!='V' OR ((_has_head_working=False AND _approver_class IN ('H', 'D', 'A')) OR 
+	IF (_approval_status!='V' OR ((_has_head_working=False AND _approver_class IN ('H', 'D', 'A')) OR -- when the status is validated, check if has the permission to approve, if the approver still works on the company and if the approval date is lower than mission start date
 	(_has_head_working AND _approver_class IN ('D', 'A'))) AND (_approver_fired_date IS NULL) AND (_checked_at<NEW.start_at))
 	THEN
 		RETURN NEW;
@@ -311,94 +302,90 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- BIND TRIGGER
 CREATE TRIGGER TR_mission_validation
 BEFORE INSERT OR UPDATE ON mission 
 FOR EACH ROW EXECUTE PROCEDURE mission_validation();
 
-
--- DEFINE TRIGGER
 CREATE OR REPLACE FUNCTION autorisation_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
 _id_mission integer;
 _id_invoice integer;
 BEGIN
-	SELECT M.id INTO _id_mission
+	SELECT M.id INTO _id_mission -- filling the variables
 	FROM mission M
 	WHERE M.id_autorisation = NEW.id 
 	LIMIT 1;
 
-	SELECT I.id INTO _id_invoice
+	SELECT I.id INTO _id_invoice -- filling the variables
 	FROM invoice I
 	WHERE I.id_autorisation = NEW.id 
 	LIMIT 1;
 
-
-	IF (_id_mission IS NOT NULL)
+	IF (_id_mission IS NOT NULL) -- checks if the autorization is for invoice or mission, since they share the autorization
 	THEN
-		UPDATE mission SET id=id WHERE id=_id_mission; -- force trigger to fire
+		UPDATE mission SET id=id WHERE id=_id_mission; -- force trigger to fire, to validade mission status
+	END IF;
+	IF (_id_invoice IS NOT NULL) -- checks if the autorization is for invoice or mission, since they share the autorization
+	THEN
+		UPDATE invoice SET id=id WHERE id=_id_invoice; -- force trigger to fire, to validade invoice status
 	END IF;
 
-	IF (_id_invoice IS NOT NULL)
+	IF (NEW.id_checker_staff IS NULL) OR (NEW.checked_at IS NULL) -- synchronize these two inter-dependent fields, if one of then is null the other one must be null as well (if not approved)
 	THEN
-		UPDATE invoice SET id=id WHERE id=_id_invoice; -- force trigger to fire
-	END IF;
-
-	IF (NEW.id_checker_staff IS NULL) OR (NEW.checked_at IS NULL)
-	THEN
-		NEW.id_checker_staff=NULL;
-		NEW.checked_at=NULL;
+		IF (NEW.status!='V')
+		THEN
+			NEW.id_checker_staff=NULL; -- set both to null
+			NEW.checked_at=NULL;
+		ELSE -- else statement, to run case status=validated
+			RAISE EXCEPTION 'Autorization(id:%) without timestamp or staff related to it!', NEW.id; -- raise exception to cancel the update
+		END IF;
 	END IF;
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- BIND TRIGGER
 CREATE TRIGGER TR_autorisation_validation 
 BEFORE INSERT OR UPDATE ON autorisation 
 FOR EACH ROW EXECUTE PROCEDURE autorisation_validation();
 
 
--- DEFINE TRIGGER
 CREATE OR REPLACE FUNCTION missionstaff_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
-_staff_holidays date[];
+_staff_holidays date[]; -- array of dates, i just want to iterate in a different way now
 _mission_start timestamp;
 _mission_end timestamp;
-i integer;
+i integer; -- iterator
 BEGIN
-	SELECT ARRAY(SELECT H.holiday 
+	SELECT ARRAY(SELECT H.holiday  -- store the query result on the array
 	FROM staff_holidays H
 	WHERE H.id_staff = NEW.id_staff) INTO _staff_holidays;
 
-	SELECT M.start_at, M.end_at INTO _mission_start, _mission_end
+	SELECT M.start_at, M.end_at INTO _mission_start, _mission_end -- fill the variables
 	FROM mission M
 	WHERE M.id = NEW.id_mission
 	LIMIT 1;
 
-	FOR i IN 1..coalesce(array_upper(_staff_holidays, 1), 0)
+	FOR i IN 1..coalesce(array_upper(_staff_holidays, 1), 0) -- iterates holidays using an index from 1 until its size, coalesce is here to add robustness to the code, avoiding NULL exceptions
 	LOOP
-		IF (_staff_holidays[i]>=_mission_start) AND (_staff_holidays[i]<=_mission_end)
+		IF (_staff_holidays[i]>=_mission_start) AND (_staff_holidays[i]<=_mission_end) -- check if there is a holiday during mission
 		THEN
-			RAISE EXCEPTION 'Staff(id:%) has a holiday during mission in missionstaff!', NEW.id_staff;
+			RAISE EXCEPTION 'Staff(id:%) has a holiday during mission in missionstaff!', NEW.id_staff; -- raise exception to cancel
 		END IF;
 	END LOOP;
 
-	UPDATE autorisation SET id_checker_staff=NULL, checked_at=NULL, status='H'
+	UPDATE autorisation SET id_checker_staff=NULL, checked_at=NULL, status='H' -- when we add or modify information about mission's employees we need to put the mission on hold again to be validated with the new data
 	WHERE id=(SELECT id_autorisation FROM mission WHERE id=NEW.id_mission LIMIT 1);
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- BIND TRIGGER
 CREATE TRIGGER TR_missionstaff_validation 
 BEFORE INSERT OR UPDATE ON mission_staff 
 FOR EACH ROW EXECUTE PROCEDURE missionstaff_validation();
 
 
--- DEFINE TRIGGER
 CREATE OR REPLACE FUNCTION invoice_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
@@ -408,38 +395,37 @@ _approver_class varchar(1);
 _approver_fired_date timestamp;
 _id_checker_staff integer;
 BEGIN
-	IF (NEW.id_autorisation IS NULL)
+	IF (NEW.id_autorisation IS NULL) -- forcing id_autorisation to be NOT NULL
 	THEN
 		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation;
 	END IF;
 
-	SELECT A.id_checker_staff,A.status INTO _id_checker_staff, _approval_status
+	SELECT A.id_checker_staff,A.status INTO _id_checker_staff, _approval_status -- filling vars
 	FROM autorisation A
 	WHERE A.id = NEW.id_autorisation 
 	LIMIT 1;
 
-	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date
+	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date -- filling vars
 	FROM staff S
 	WHERE S.id = _id_checker_staff
 	LIMIT 1;
 
-	SELECT S.class INTO _requester_class
+	SELECT S.class INTO _requester_class -- filling vars
 	FROM staff S INNER JOIN mission_costs M on S.id=M.id_staff
 	WHERE M.id = NEW.id_mission_cost
 	LIMIT 1;
 
-	IF (_approval_status='V')
+	IF (_approval_status='V') -- we validate only on approved scenario
 	THEN
-		IF (_requester_class='E' AND _approver_class NOT IN ('H', 'D', 'A')) OR (_requester_class='H' AND _approver_class NOT IN ('D', 'A')) OR (_approver_fired_date IS NOT NULL) 
+		IF (_requester_class='E' AND _approver_class NOT IN ('H', 'D', 'A')) OR (_requester_class='H' AND _approver_class NOT IN ('D', 'A')) OR (_approver_fired_date IS NOT NULL) -- check permission level
 		THEN
-			RAISE EXCEPTION 'Invalid approver or approval date in invoice(id:%)!', NEW.id; 
+			RAISE EXCEPTION 'Invalid approver or approval date in invoice(id:%)!', NEW.id; -- raise exception to cancel
 		END IF;
 	END IF;
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- BIND TRIGGER
 CREATE TRIGGER TR_invoice_validation
 BEFORE INSERT OR UPDATE ON invoice 
 FOR EACH ROW EXECUTE PROCEDURE invoice_validation();
