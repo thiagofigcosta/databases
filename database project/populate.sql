@@ -1,3 +1,5 @@
+SET session_replication_role = replica; -- disable all triggers
+
 INSERT INTO country (name) VALUES ('Brazil'), ('Netherlands'), ('United Kingdom'), ('Portugal'), ('Italy'), ('Argentine'), ('Paraguay');
 INSERT INTO address (street, "number", complement, zipcode, district, city, state, id_country) VALUES 
 	('Jorge Street', 20, 'apt 03', '304202', 'Zuid', 'Amsterdam', 'Hollande-Septentrionale', (SELECT id FROM country WHERE name='Netherlands')),
@@ -155,4 +157,7 @@ INSERT INTO plane_transport (id_mission_cost, company_name, ticket_ref, flight_n
 
 INSERT INTO service_car_transport (id_mission_cost, id_car, km_driven, withdrawal_at, returned_at) VALUES
 	(11,(SELECT id FROM cars WHERE license_plate='KKK-6652'),600.8,make_timestamp(2020,03,30, 06,00,52.65),make_timestamp(2020,04,20, 13,05,14.3)),
-	(13,(SELECT id FROM cars WHERE license_plate='HLN-3842'),620.1,make_timestamp(2020,03,30, 06,10,23.5),make_timestamp(2020,04,20, 12,42,17.6));
+	(13,(SELECT id FROM cars WHERE license_plate='HLN-3842'),620.1,make_timestamp(2020,03,30, 06,10,23.5),make_timestamp(2020,04,20, 12,42,17.6)),
+	(13,(SELECT id FROM cars WHERE license_plate='HLN-3842'),500.1,make_timestamp(2019,03,30, 06,10,23.5),make_timestamp(2019,04,20, 12,42,17.6)); -- added just to have 2 entries
+
+SET session_replication_role = DEFAULT; -- enable all triggers
