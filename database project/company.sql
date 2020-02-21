@@ -1,7 +1,5 @@
 -- TODO
---- query para calcular kilometragem do veiculo da empresa
---- scripts de visualizacao 
---- scripts de modificacao
+--- transactions
 --- diagrama entidade relacionamento
 --- modelo logico (aquele que parece com o sql, 1 linha por tabela)
 
@@ -68,9 +66,9 @@ CREATE TABLE IF NOT EXISTS department_workers ( -- doesnt need to have id, but i
 	PRIMARY KEY(id_staff, id_department) -- composite PK
 );
 
-CREATE SEQUENCE IF NOT EXISTS SQ_AUTORISATION_PK INCREMENT BY 1 START WITH 1;
-CREATE TABLE IF NOT EXISTS autorisation (
-	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_AUTORISATION_PK'),
+CREATE SEQUENCE IF NOT EXISTS SQ_APPROVEMENT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE IF NOT EXISTS approvement (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_APPROVEMENT_PK'),
 	status VARCHAR(1) NOT NULL,
 	checked_at TIMESTAMP, -- timestamps are very important on business databases, we should have more stamps and more historical data on a real scenario
 	id_checker_staff INTEGER,
@@ -89,7 +87,7 @@ CREATE TABLE IF NOT EXISTS mission (
 	description TEXT NOT NULL, -- to allow huge texts
 	id_dst_address INTEGER NOT NULL,
 	id_department INTEGER NOT NULL,
-	id_autorisation INTEGER UNIQUE, -- avoid 2 missions to have same autorization
+	id_approvement INTEGER UNIQUE, -- avoid 2 missions to have same autorization
 	constraint CK_dates check (start_at<end_at) -- avoid non-sense data
 );
 
@@ -109,7 +107,7 @@ CREATE TABLE IF NOT EXISTS invoice (
 	id_mission_cost INTEGER NOT NULL,
 	attachment_path VARCHAR(64) NOT NULL UNIQUE, -- path to invoice comprovation, must be implemented on application to save the file and store the path
 	comments VARCHAR(300),
-	id_autorisation INTEGER UNIQUE -- avoid 2 missions to have same autorization
+	id_approvement INTEGER UNIQUE -- avoid 2 missions to have same autorization
 );
 
 CREATE TABLE IF NOT EXISTS mission_staff ( -- to allow several employees on the same mission
@@ -188,8 +186,8 @@ CREATE TABLE IF NOT EXISTS service_car_transport (
 );
 
 -- below the foreign keys
-ALTER TABLE address ADD CONSTRAINT FK_address_country FOREIGN KEY(id_country) REFERENCES country(id) ON DELETE CASCADE ON UPDATE CASCADE;
-
+ALTER TABLE address ADD CONSTRAINT FK_address_country FOREIGN KEY(id_country) REFERENCES country(id) ON DELETE CASCADE ON UPDATE CASCADE; -- ON DELETE CASCADE ON UPDATE CASCADE - means that if the PK is modified, its new value is going to be propaged trough the FKs
+																																				-- and if the entry with the PK is deleted, the dependant entries with the FK will be deleted as well
 ALTER TABLE staff ADD CONSTRAINT FK_staff_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE staff_holidays ADD CONSTRAINT FK_staffhollidays_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -203,15 +201,15 @@ ALTER TABLE department_workers ADD CONSTRAINT FK_departmentworkers_department FO
 
 ALTER TABLE mission ADD CONSTRAINT FK_mission_address FOREIGN KEY(id_dst_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE mission ADD CONSTRAINT FK_mission_department FOREIGN KEY(id_department) REFERENCES department(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission ADD CONSTRAINT FK_mission_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission ADD CONSTRAINT FK_mission_approvement FOREIGN KEY(id_approvement) REFERENCES approvement(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE autorisation ADD CONSTRAINT FK_autorisation_approver FOREIGN KEY(id_checker_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE approvement ADD CONSTRAINT FK_approvement_approver FOREIGN KEY(id_checker_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE invoice ADD CONSTRAINT FK_invoice_missioncost FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE invoice ADD CONSTRAINT FK_invoice_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE invoice ADD CONSTRAINT FK_invoice_approvement FOREIGN KEY(id_approvement) REFERENCES approvement(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -225,11 +223,11 @@ ALTER TABLE train_transport ADD CONSTRAINT FK_traintransport_missioncosts FOREIG
 ALTER TABLE car_rental_transport ADD CONSTRAINT FK_carrentaltransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE; 
 
 -- TRIGGERS
-CREATE OR REPLACE FUNCTION department_validation() -- define the trigger function
-	RETURNS TRIGGER AS $$ -- $$ is the separator (can be anything), this means a sort of 'BEGIN'
+CREATE OR REPLACE FUNCTION department_validation() -- define the trigger function -- $$ is the separator (can be anything), this means a sort of 'BEGIN'
+	RETURNS TRIGGER AS $$ 
 DECLARE -- define some variables to store data
 _manager_class varchar(1);
 _manager_fired_date timestamp;
@@ -268,14 +266,14 @@ _checked_at timestamp;
 _id_checker_staff integer;
 row record; -- we need to declare this as well to use as iterator on LOOP
 BEGIN
-	IF (NEW.id_autorisation IS NULL) -- another way to do "NOT NULL", but instead of raising error it creates a default entry on the other table for it
+	IF (NEW.id_approvement IS NULL) -- another way to do "NOT NULL", but instead of raising error it creates a default entry on the other table for it
 	THEN
-		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation; -- create the entry and put its id value on the id_autorisation FK field
+		INSERT INTO approvement (status) VALUES ('H') RETURNING id INTO NEW.id_approvement; -- create the entry and put its id value on the id_approvement FK field
 	END IF;
 
 	SELECT A.checked_at,A.id_checker_staff,A.status INTO _checked_at, _id_checker_staff, _approval_status -- filling the variables, getting the approval status
-	FROM autorisation A
-	WHERE A.id = NEW.id_autorisation 
+	FROM approvement A
+	WHERE A.id = NEW.id_approvement 
 	LIMIT 1;
 
 	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date -- filling the variables
@@ -306,7 +304,7 @@ CREATE TRIGGER TR_mission_validation
 BEFORE INSERT OR UPDATE ON mission 
 FOR EACH ROW EXECUTE PROCEDURE mission_validation();
 
-CREATE OR REPLACE FUNCTION autorisation_validation()
+CREATE OR REPLACE FUNCTION approvement_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
 _id_mission integer;
@@ -314,12 +312,12 @@ _id_invoice integer;
 BEGIN
 	SELECT M.id INTO _id_mission -- filling the variables
 	FROM mission M
-	WHERE M.id_autorisation = NEW.id 
+	WHERE M.id_approvement = NEW.id 
 	LIMIT 1;
 
 	SELECT I.id INTO _id_invoice -- filling the variables
 	FROM invoice I
-	WHERE I.id_autorisation = NEW.id 
+	WHERE I.id_approvement = NEW.id 
 	LIMIT 1;
 
 	IF (_id_mission IS NOT NULL) -- checks if the autorization is for invoice or mission, since they share the autorization
@@ -345,9 +343,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER TR_autorisation_validation 
-BEFORE INSERT OR UPDATE ON autorisation 
-FOR EACH ROW EXECUTE PROCEDURE autorisation_validation();
+CREATE TRIGGER TR_approvement_validation 
+BEFORE INSERT OR UPDATE ON approvement 
+FOR EACH ROW EXECUTE PROCEDURE approvement_validation();
 
 
 CREATE OR REPLACE FUNCTION missionstaff_validation()
@@ -375,8 +373,8 @@ BEGIN
 		END IF;
 	END LOOP;
 
-	UPDATE autorisation SET id_checker_staff=NULL, checked_at=NULL, status='H' -- when we add or modify information about mission's employees we need to put the mission on hold again to be validated with the new data
-	WHERE id=(SELECT id_autorisation FROM mission WHERE id=NEW.id_mission LIMIT 1);
+	UPDATE approvement SET id_checker_staff=NULL, checked_at=NULL, status='H' -- when we add or modify information about mission's employees we need to put the mission on hold again to be validated with the new data
+	WHERE id=(SELECT id_approvement FROM mission WHERE id=NEW.id_mission LIMIT 1);
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -395,14 +393,14 @@ _approver_class varchar(1);
 _approver_fired_date timestamp;
 _id_checker_staff integer;
 BEGIN
-	IF (NEW.id_autorisation IS NULL) -- forcing id_autorisation to be NOT NULL
+	IF (NEW.id_approvement IS NULL) -- forcing id_approvement to be NOT NULL
 	THEN
-		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation;
+		INSERT INTO approvement (status) VALUES ('H') RETURNING id INTO NEW.id_approvement;
 	END IF;
 
 	SELECT A.id_checker_staff,A.status INTO _id_checker_staff, _approval_status -- filling vars
-	FROM autorisation A
-	WHERE A.id = NEW.id_autorisation 
+	FROM approvement A
+	WHERE A.id = NEW.id_approvement 
 	LIMIT 1;
 
 	SELECT S.class,S.fired_at INTO _approver_class, _approver_fired_date -- filling vars

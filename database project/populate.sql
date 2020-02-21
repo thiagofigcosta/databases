@@ -68,14 +68,14 @@ INSERT INTO department_workers (id_staff, id_department) VALUES
 	((SELECT id FROM staff WHERE firstname='Adriana'),(SELECT id FROM department WHERE name='Administration')),
 	((SELECT id FROM staff WHERE firstname='Julio'),(SELECT id FROM department WHERE name='Administration'));
 
-INSERT INTO autorisation (status, checked_at, id_checker_staff) VALUES 
+INSERT INTO approvement (status, checked_at, id_checker_staff) VALUES 
 	('V',make_timestamp(2020,01,15, 14,30,14.33),(SELECT id FROM staff WHERE firstname='Thiago')),
 	('D',make_timestamp(2020,01,15, 14,50,1.5),(SELECT id FROM staff WHERE firstname='Thiago')),
 	('V',make_timestamp(2020,01,22, 15,30,16.96),(SELECT id FROM staff WHERE firstname='Thiago')),
 	('V',make_timestamp(2020,01,22, 15,32,45.26),(SELECT id FROM staff WHERE firstname='Taylor')),
 	('V',make_timestamp(2020,01,22, 14,00,01.02),(SELECT id FROM staff WHERE firstname='Taylor'));
 
-INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_department, id_autorisation) VALUES 
+INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_department, id_approvement) VALUES 
 	(make_date(2020,01,16),make_date(2020,01,20),'Count cars on the street','Very long description',2,(SELECT id FROM department WHERE name='Transportation'),1),
 	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Administration'),2);
 
@@ -112,7 +112,7 @@ INSERT INTO mission_costs (id_mission, cost, description, id_staff,comments) VAL
 	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Andre'),NULL),
 	(4,20,'Transportation',(SELECT id FROM staff WHERE firstname='Andre'),NULL);
 
-INSERT INTO invoice (id_mission_cost, attachment_path, comments, id_autorisation) VALUES 
+INSERT INTO invoice (id_mission_cost, attachment_path, comments, id_approvement) VALUES 
 	(1,'/acc/35353543.pdf','Payment by card has 10% tax',3),
 	(2,'/trans/a6df456sd.pdf',NULL,4),
 	(3,'/food/s65z5fsd4.pdf',NULL,5),
@@ -159,5 +159,41 @@ INSERT INTO service_car_transport (id_mission_cost, id_car, km_driven, withdrawa
 	(11,(SELECT id FROM cars WHERE license_plate='KKK-6652'),600.8,make_timestamp(2020,03,30, 06,00,52.65),make_timestamp(2020,04,20, 13,05,14.3)),
 	(13,(SELECT id FROM cars WHERE license_plate='HLN-3842'),620.1,make_timestamp(2020,03,30, 06,10,23.5),make_timestamp(2020,04,20, 12,42,17.6)),
 	(13,(SELECT id FROM cars WHERE license_plate='HLN-3842'),500.1,make_timestamp(2019,03,30, 06,10,23.5),make_timestamp(2019,04,20, 12,42,17.6)); -- added just to have 2 entries
+
+
+--- data just to show result on requested queries
+INSERT INTO cars (brand, model, chassis, license_plate, insurance_number) VALUES 
+	('Fiat','147','1J4FY19S7VP423468','OLD-0000','26');
+
+INSERT INTO car_maintenance (id_car, inspected_at, description) VALUES 
+	((SELECT id FROM cars WHERE license_plate='OLD-0000'),make_timestamp(1990,06,06, 18,22,14.33),'Everything OK'),
+	((SELECT id FROM cars WHERE license_plate='OLD-0000'),make_timestamp(1994,06,06, 18,22,14.33),'Car broken');
+
+INSERT INTO service_car_transport (id_mission_cost, id_car, km_driven, withdrawal_at, returned_at) VALUES -- added just to have huge amount of kms
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),62522,make_date(1990,01,30),make_date(1990,02,27)),
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),36562.5415,make_date(1990,03,30),make_date(1990,04,30)),
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),23230.6522,make_date(1990,05,30),make_date(1990,06,30)),
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),15122.87451,make_date(1990,07,30),make_date(1990,08,30)),
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),8586.656,make_date(1990,09,30),make_date(1990,10,30)),
+	(13,(SELECT id FROM cars WHERE license_plate='OLD-0000'),666.666,make_date(1990,11,30),make_date(1990,12,30));
+
+INSERT INTO approvement (status, checked_at, id_checker_staff) VALUES 
+	('D',make_timestamp(2020,01,15, 14,50,1.5),(SELECT id FROM staff WHERE firstname='Thiago')),
+	('D',make_timestamp(2020,01,15, 14,50,1.5),(SELECT id FROM staff WHERE firstname='Thiago')),
+	('D',make_timestamp(2020,01,15, 14,50,1.5),(SELECT id FROM staff WHERE firstname='Thiago'));
+
+INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_department, id_approvement) VALUES 
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 2','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),6),
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 3','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),7),
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 4','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),8);
+
+INSERT INTO mission_staff (id_mission, id_staff) VALUES 
+	(5,(SELECT id FROM staff WHERE firstname='Jack')),
+	(6,(SELECT id FROM staff WHERE firstname='Jack')),
+	(7,(SELECT id FROM staff WHERE firstname='Jack')),
+	(5,(SELECT id FROM staff WHERE firstname='Michael')),
+	(6,(SELECT id FROM staff WHERE firstname='Michael')),
+	(7,(SELECT id FROM staff WHERE firstname='Michael'));
+
 
 SET session_replication_role = DEFAULT; -- enable all triggers
