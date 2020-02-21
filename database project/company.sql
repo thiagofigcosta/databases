@@ -1,5 +1,4 @@
 -- TODO
---- script de povoamento
 --- query para calcular kilometragem do veiculo da empresa
 --- scripts de visualizacao 
 --- scripts de modificacao
@@ -27,7 +26,6 @@ CREATE TABLE IF NOT EXISTS country (
 	name VARCHAR(50) NOT NULL UNIQUE
 );
 
-
 CREATE SEQUENCE IF NOT EXISTS SQ_STAFF_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS staff (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_STAFF_PK'),
@@ -42,11 +40,10 @@ CREATE TABLE IF NOT EXISTS staff (
 	fired_at TIMESTAMP,
 	emergency_phone VARCHAR (16) NOT NULL,
 	constraint CK_staff_class check (class in (	'E',  -- employee
-												'H',  -- service head
+												'H',  -- department head
 												'D',  -- director
 												'A')) -- system admin
 );
-
 
 CREATE SEQUENCE IF NOT EXISTS SQ_STAFFHOLIDAYS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS staff_holidays (
@@ -58,36 +55,22 @@ CREATE TABLE IF NOT EXISTS staff_holidays (
 
 
 
-CREATE SEQUENCE IF NOT EXISTS SQ_SERVICE_PK INCREMENT BY 1 START WITH 1;
-CREATE TABLE IF NOT EXISTS service (
-	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_SERVICE_PK'),
-	name VARCHAR(32) NOT NULL,
-	email VARCHAR(56) NOT NULL,
+CREATE SEQUENCE IF NOT EXISTS SQ_DEPARTMENT_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE IF NOT EXISTS department ( -- "service"
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_DEPARTMENT_PK'),
+	name VARCHAR(32) NOT NULL UNIQUE,
+	email VARCHAR(56) NOT NULL UNIQUE,
 	id_address INTEGER NOT NULL,
 	id_manager INTEGER NOT NULL,
 	id_assistant INTEGER NOT NULL
 );
 
 
-CREATE TABLE IF NOT EXISTS service_workers (
+CREATE TABLE IF NOT EXISTS department_workers (
 	id_staff INTEGER NOT NULL,
-	id_service INTEGER NOT NULL,
-	PRIMARY KEY(id_staff, id_service)
+	id_department INTEGER NOT NULL,
+	PRIMARY KEY(id_staff, id_department)
 );
-
-
-CREATE SEQUENCE IF NOT EXISTS SQ_MISSION_PK INCREMENT BY 1 START WITH 1;
-CREATE TABLE IF NOT EXISTS mission (
-	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_MISSION_PK'),
-	start_at TIMESTAMP NOT NULL,
-	end_at TIMESTAMP NOT NULL,
-	description TEXT NOT NULL,
-	id_dst_address INTEGER NOT NULL,
-	id_service INTEGER NOT NULL,
-	id_autorisation INTEGER NOT NULL
-);
-
-
 
 CREATE SEQUENCE IF NOT EXISTS SQ_AUTORISATION_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS autorisation (
@@ -97,11 +80,22 @@ CREATE TABLE IF NOT EXISTS autorisation (
 	id_checker_staff INTEGER,
 	constraint CK_status check (status in (	'H',  -- on hold
 											'V',  -- validated
-											'D',  -- rejected
+											'D',  -- denied
 											'R')) -- revision requested
 );
 
-
+CREATE SEQUENCE IF NOT EXISTS SQ_MISSION_PK INCREMENT BY 1 START WITH 1;
+CREATE TABLE IF NOT EXISTS mission (
+	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_MISSION_PK'),
+	start_at TIMESTAMP NOT NULL,
+	end_at TIMESTAMP NOT NULL,
+	name VARCHAR(32) NOT NULL,
+	description TEXT NOT NULL,
+	id_dst_address INTEGER NOT NULL,
+	id_department INTEGER NOT NULL,
+	id_autorisation INTEGER UNIQUE,
+	constraint CK_dates check (start_at<end_at)
+);
 
 CREATE SEQUENCE IF NOT EXISTS SQ_MISSIONCOSTS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS mission_costs (
@@ -113,17 +107,14 @@ CREATE TABLE IF NOT EXISTS mission_costs (
 	id_staff INTEGER NOT NULL
 );
 
-
 CREATE SEQUENCE IF NOT EXISTS SQ_INVOICE_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS invoice (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_INVOICE_PK'),
 	id_mission_cost INTEGER NOT NULL,
-	attachment_path VARCHAR(64) NOT NULL,
+	attachment_path VARCHAR(64) NOT NULL UNIQUE,
 	comments VARCHAR(300),
-	id_autorisation INTEGER NOT NULL
+	id_autorisation INTEGER UNIQUE
 );
-
-
 
 CREATE TABLE IF NOT EXISTS mission_staff (
 	id_mission INTEGER NOT NULL,
@@ -131,13 +122,14 @@ CREATE TABLE IF NOT EXISTS mission_staff (
 	PRIMARY KEY (id_mission,id_staff)
 );
 
-
 CREATE SEQUENCE IF NOT EXISTS SQ_CARS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS cars (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_CARS_PK'),
-	chassis VARCHAR(17) NOT NULL,
-	license_plate VARCHAR(10) NOT NULL,
-	insurance_number VARCHAR(15) NOT NULL
+	brand VARCHAR(15) NOT NULL,
+	model VARCHAR(15) NOT NULL,
+	chassis VARCHAR(17) NOT NULL UNIQUE,
+	license_plate VARCHAR(10) NOT NULL UNIQUE,
+	insurance_number VARCHAR(15) NOT NULL UNIQUE
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_CARMAINTENANCE_PK INCREMENT BY 1 START WITH 1;
@@ -148,7 +140,6 @@ CREATE TABLE IF NOT EXISTS car_maintenance (
 	description TEXT
 );
 
-
 CREATE SEQUENCE IF NOT EXISTS SQ_PLANETRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS plane_transport (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_PLANETRANSPORT_PK'),
@@ -158,7 +149,8 @@ CREATE TABLE IF NOT EXISTS plane_transport (
 	flight_number VARCHAR(12) NOT NULL,
 	seat_number VARCHAR(12) NOT NULL,
 	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL
+	arrival_at TIMESTAMP NOT NULL,
+	constraint CK_plane_dates check (departure_at<arrival_at)
 );
 
 
@@ -171,7 +163,8 @@ CREATE TABLE IF NOT EXISTS train_transport (
 	train_number VARCHAR(12) NOT NULL,
 	seat_number VARCHAR(12) NOT NULL,
 	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL
+	arrival_at TIMESTAMP NOT NULL,
+	constraint CK_train_dates check (departure_at<arrival_at)
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_CARRENTALTRANSPORT_PK INCREMENT BY 1 START WITH 1;
@@ -181,8 +174,9 @@ CREATE TABLE IF NOT EXISTS car_rental_transport (
 	company_name VARCHAR(20) NOT NULL,
 	rental_ref VARCHAR(12) NOT NULL,
 	car_reg VARCHAR(12) NOT NULL,
-	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL
+	rented_at TIMESTAMP NOT NULL,
+	returned_at TIMESTAMP NOT NULL,
+	constraint CK_rental_dates check (rented_at<returned_at)
 );
 
 
@@ -191,9 +185,10 @@ CREATE TABLE IF NOT EXISTS service_car_transport (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_SERVICECARTRANSPORT_PK'),
 	id_mission_cost INTEGER NOT NULL, -- cost related to this transport
 	id_car INTEGER NOT NULL,
-	km_driven INTEGER NOT NULL,
-	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL
+	km_driven FLOAT NOT NULL,
+	withdrawal_at TIMESTAMP NOT NULL,
+	returned_at TIMESTAMP NOT NULL,
+	constraint CK_car_dates check (withdrawal_at<returned_at)
 );
 
 
@@ -203,15 +198,15 @@ ALTER TABLE staff ADD CONSTRAINT FK_staff_address FOREIGN KEY(id_address) REFERE
 
 ALTER TABLE staff_holidays ADD CONSTRAINT FK_staffhollidays_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE service ADD CONSTRAINT FK_service_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service ADD CONSTRAINT FK_service_staffmanager FOREIGN KEY(id_manager) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service ADD CONSTRAINT FK_service_staffassistant FOREIGN KEY(id_assistant) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE department ADD CONSTRAINT FK_department_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE department ADD CONSTRAINT FK_department_staffmanager FOREIGN KEY(id_manager) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE department ADD CONSTRAINT FK_department_staffassistant FOREIGN KEY(id_assistant) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE department_workers ADD CONSTRAINT FK_departmentworkers_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE department_workers ADD CONSTRAINT FK_departmentworkers_department FOREIGN KEY(id_department) REFERENCES department(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE mission ADD CONSTRAINT FK_mission_address FOREIGN KEY(id_dst_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission ADD CONSTRAINT FK_mission_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission ADD CONSTRAINT FK_mission_department FOREIGN KEY(id_department) REFERENCES department(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE mission ADD CONSTRAINT FK_mission_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE autorisation ADD CONSTRAINT FK_autorisation_approver FOREIGN KEY(id_checker_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -237,9 +232,8 @@ ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_missionc
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 
-
 -- DEFINE TRIGGER
-CREATE OR REPLACE FUNCTION service_validation()
+CREATE OR REPLACE FUNCTION department_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
 _manager_class varchar(1);
@@ -256,24 +250,25 @@ BEGIN
 	WHERE S.id = NEW.id_assistant
 	LIMIT 1;
 
-	IF (_manager_class IN ('H', 'D', 'A') ) AND (_manager_fired_date IS NOT NULL) AND (_assistant_fired_date IS NOT NULL)
+	IF (_manager_class IN ('H', 'D', 'A') ) AND (_manager_fired_date IS NULL) AND (_assistant_fired_date IS NULL)
 	THEN
 		RETURN NEW;
 	END IF;
-	RAISE EXCEPTION 'Invalid manager or assistant in service(id:%)!', NEW.id;
+	RAISE EXCEPTION 'Invalid manager or assistant in department(id:%)!', NEW.id;
 END;
 $$ LANGUAGE plpgsql;
 
 -- BIND TRIGGER
-CREATE TRIGGER TR_service_validation 
-BEFORE INSERT OR UPDATE ON service 
-FOR EACH ROW EXECUTE PROCEDURE service_validation();
+CREATE TRIGGER TR_department_validation 
+BEFORE INSERT OR UPDATE ON department 
+FOR EACH ROW EXECUTE PROCEDURE department_validation();
 
 
 -- DEFINE TRIGGER
 CREATE OR REPLACE FUNCTION mission_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
+_approval_status varchar(1);
 _approver_class varchar(1);
 _approver_fired_date timestamp;
 _has_head_working boolean = False;
@@ -281,7 +276,12 @@ _checked_at timestamp;
 _id_checker_staff integer;
 row record;
 BEGIN
-	SELECT A.checked_at,A.id_checker_staff INTO _checked_at, _id_checker_staff
+	IF (NEW.id_autorisation IS NULL)
+	THEN
+		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation;
+	END IF;
+
+	SELECT A.checked_at,A.id_checker_staff,A.status INTO _checked_at, _id_checker_staff, _approval_status
 	FROM autorisation A
 	WHERE A.id = NEW.id_autorisation 
 	LIMIT 1;
@@ -291,7 +291,7 @@ BEGIN
 	WHERE S.id = _id_checker_staff
 	LIMIT 1;
 
-	-- check if mission has service head
+	-- check if mission has department head
 	FOR row IN
 	SELECT S.class FROM mission_staff M INNER JOIN staff S ON M.id_staff=S.id WHERE M.id_mission=NEW.id
 	LOOP
@@ -302,8 +302,8 @@ BEGIN
 		END IF;
 	END LOOP;
 
-	IF ((_has_head_working=False AND _manager_class IN ('H', 'D', 'A')) OR 
-	(_has_head_working AND _manager_class IN ('D', 'A'))) AND (_approver_fired_date IS NOT NULL) AND (_checked_at<NEW.start_at)
+	IF (_approval_status!='V' OR ((_has_head_working=False AND _approver_class IN ('H', 'D', 'A')) OR 
+	(_has_head_working AND _approver_class IN ('D', 'A'))) AND (_approver_fired_date IS NULL) AND (_checked_at<NEW.start_at))
 	THEN
 		RETURN NEW;
 	END IF;
@@ -337,12 +337,12 @@ BEGIN
 
 	IF (_id_mission IS NOT NULL)
 	THEN
-		UPDATE mission M SET M.id=M.id WHERE M.id=_id_mission; -- force trigger to fire
+		UPDATE mission SET id=id WHERE id=_id_mission; -- force trigger to fire
 	END IF;
 
 	IF (_id_invoice IS NOT NULL)
 	THEN
-		UPDATE invoice I SET I.id=I.id WHERE I.id=_id_invoice; -- force trigger to fire
+		UPDATE invoice SET id=id WHERE id=_id_invoice; -- force trigger to fire
 	END IF;
 
 	IF (NEW.id_checker_staff IS NULL) OR (NEW.checked_at IS NULL)
@@ -369,25 +369,25 @@ _mission_start timestamp;
 _mission_end timestamp;
 i integer;
 BEGIN
-	SELECT H.holiday INTO _staff_holidays
-	FROM staff_holidays
-	WHERE H.id_staff = NEW.id_staff;
+	SELECT ARRAY(SELECT H.holiday 
+	FROM staff_holidays H
+	WHERE H.id_staff = NEW.id_staff) INTO _staff_holidays;
 
 	SELECT M.start_at, M.end_at INTO _mission_start, _mission_end
 	FROM mission M
 	WHERE M.id = NEW.id_mission
 	LIMIT 1;
 
-	FOR i IN 1 .. array_upper(_staff_holidays, 1)
+	FOR i IN 1..coalesce(array_upper(_staff_holidays, 1), 0)
 	LOOP
-		IF (_staff_holidays[i]>_mission_start) AND (_staff_holidays[i]<_mission_end)
+		IF (_staff_holidays[i]>=_mission_start) AND (_staff_holidays[i]<=_mission_end)
 		THEN
-			RAISE EXCEPTION 'Staff(id:%) has holiday during mission in missionstaff(id:%)!', M.id_staff, NEW.id;
+			RAISE EXCEPTION 'Staff(id:%) has a holiday during mission in missionstaff!', NEW.id_staff;
 		END IF;
 	END LOOP;
 
-	UPDATE autorisation A SET A.id_checker_staff=NULL, A.checked_at=NULL, A.staus='H'
-	WHERE A.id=(SELECT M.id_autorisation FROM mission M WHERE M.id=NEW.id_mission LIMIT 1);
+	UPDATE autorisation SET id_checker_staff=NULL, checked_at=NULL, status='H'
+	WHERE id=(SELECT id_autorisation FROM mission WHERE id=NEW.id_mission LIMIT 1);
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -402,12 +402,18 @@ FOR EACH ROW EXECUTE PROCEDURE missionstaff_validation();
 CREATE OR REPLACE FUNCTION invoice_validation()
 	RETURNS TRIGGER AS $$
 DECLARE
+_approval_status varchar(1);
 _requester_class varchar(1);
 _approver_class varchar(1);
 _approver_fired_date timestamp;
 _id_checker_staff integer;
 BEGIN
-	SELECT A.id_checker_staff INTO _id_checker_staff
+	IF (NEW.id_autorisation IS NULL)
+	THEN
+		INSERT INTO autorisation (status) VALUES ('H') RETURNING id INTO NEW.id_autorisation;
+	END IF;
+
+	SELECT A.id_checker_staff,A.status INTO _id_checker_staff, _approval_status
 	FROM autorisation A
 	WHERE A.id = NEW.id_autorisation 
 	LIMIT 1;
@@ -422,11 +428,13 @@ BEGIN
 	WHERE M.id = NEW.id_mission_cost
 	LIMIT 1;
 
-	IF (_requester_class='E' AND _approver_class NOT IN ('H', 'D', 'A')) OR (_requester_class='H' AND _approver_class NOT IN ('D', 'A')) OR (_approver_fired_date IS NOT NULL) 
+	IF (_approval_status='V')
 	THEN
-		RAISE EXCEPTION 'Invalid approver or approval date in invoice(id:%)!', NEW.id; 
+		IF (_requester_class='E' AND _approver_class NOT IN ('H', 'D', 'A')) OR (_requester_class='H' AND _approver_class NOT IN ('D', 'A')) OR (_approver_fired_date IS NOT NULL) 
+		THEN
+			RAISE EXCEPTION 'Invalid approver or approval date in invoice(id:%)!', NEW.id; 
+		END IF;
 	END IF;
-
 	RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
