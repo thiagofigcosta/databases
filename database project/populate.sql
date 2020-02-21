@@ -1,3 +1,5 @@
+-- The data below is not 100% consistent, mainly dates, because it has the purpose of testing only
+
 SET session_replication_role = replica; -- disable all triggers
 
 INSERT INTO country (name) VALUES ('Brazil'), ('Netherlands'), ('United Kingdom'), ('Portugal'), ('Italy'), ('Argentine'), ('Paraguay');
@@ -79,9 +81,11 @@ INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_dep
 	(make_date(2020,01,16),make_date(2020,01,20),'Count cars on the street','Very long description',2,(SELECT id FROM department WHERE name='Transportation'),1),
 	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Administration'),2);
 
+SET session_replication_role = DEFAULT; -- enable all triggers (the following needs the trigger to automatic add the approvements)
 INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_department) VALUES 
 	(make_date(2020,03,06),make_date(2020,03,08),'Fix some computers','Very long description',6,(SELECT id FROM department WHERE name='Information Technology')),
 	(make_date(2020,04,01),make_date(2020,04,20),'Implement the new system','Very long description',7,(SELECT id FROM department WHERE name='Information Technology'));
+SET session_replication_role = replica; -- disable all triggers
 
 INSERT INTO mission_staff (id_mission, id_staff) VALUES 
 	(1,(SELECT id FROM staff WHERE firstname='Camila')),
@@ -94,23 +98,23 @@ INSERT INTO mission_staff (id_mission, id_staff) VALUES
 	(4,(SELECT id FROM staff WHERE firstname='Jade')),
 	(4,(SELECT id FROM staff WHERE firstname='Andre'));
 
-INSERT INTO mission_costs (id_mission, cost, description, id_staff,comments) VALUES 
-	(1,100.99,'Accomodation',(SELECT id FROM staff WHERE firstname='Camila'),NULL),
-	(1,20,'Transportation',(SELECT id FROM staff WHERE firstname='Camila'),NULL),
-	(1,5,'Food',(SELECT id FROM staff WHERE firstname='Camila'),NULL),
+INSERT INTO mission_costs (id_mission, cost, description, id_staff,cost_date,comments) VALUES 
+	(1,100.99,'Accomodation',(SELECT id FROM staff WHERE firstname='Camila'),NOW(),NULL),
+	(1,20,'Transportation',(SELECT id FROM staff WHERE firstname='Camila'),NOW(),NULL),
+	(1,5,'Food',(SELECT id FROM staff WHERE firstname='Camila'),NOW(),NULL),
 	
-	(2,100000,'Food',(SELECT id FROM staff WHERE firstname='Julio'),NULL),
-	(2,100000,'Transportation',(SELECT id FROM staff WHERE firstname='Julio'),NULL),
+	(2,100000,'Food',(SELECT id FROM staff WHERE firstname='Julio'),NOW(),NULL),
+	(2,100000,'Transportation',(SELECT id FROM staff WHERE firstname='Julio'),NOW(),NULL),
 	
-	(3,50,'Accomodation',(SELECT id FROM staff WHERE firstname='Hugo'),NULL),
-	(3,100.99,'Transportation',(SELECT id FROM staff WHERE firstname='Hugo'),NULL),
+	(3,50,'Accomodation',(SELECT id FROM staff WHERE firstname='Hugo'),NOW(),NULL),
+	(3,100.99,'Transportation',(SELECT id FROM staff WHERE firstname='Hugo'),NOW(),NULL),
 
-	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Thiago'),NULL),
-	(4,120,'Transportation',(SELECT id FROM staff WHERE firstname='Thiago'),'Had to take a plane due an important meeting'),
-	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Jade'),NULL),
-	(4,20,'Transportation',(SELECT id FROM staff WHERE firstname='Jade'),NULL),
-	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Andre'),NULL),
-	(4,20,'Transportation',(SELECT id FROM staff WHERE firstname='Andre'),NULL);
+	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Thiago'),NOW(),NULL),
+	(4,120,'Transportation',(SELECT id FROM staff WHERE firstname='Thiago'),NOW(),'Had to take a plane due an important meeting'),
+	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Jade'),NOW(),NULL),
+	(4,20,'Transportation',(SELECT id FROM staff WHERE firstname='Jade'),NOW(),NULL),
+	(4,87.36,'Accomodation',(SELECT id FROM staff WHERE firstname='Andre'),NOW(),NULL),
+	(4,20,'Transportation',(SELECT id FROM staff WHERE firstname='Andre'),NOW(),NULL);
 
 INSERT INTO invoice (id_mission_cost, attachment_path, comments, id_approvement) VALUES 
 	(1,'/acc/35353543.pdf','Payment by card has 10% tax',3),
@@ -183,9 +187,9 @@ INSERT INTO approvement (status, checked_at, id_checker_staff) VALUES
 	('D',make_timestamp(2020,01,15, 14,50,1.5),(SELECT id FROM staff WHERE firstname='Thiago'));
 
 INSERT INTO mission (start_at, end_at, name, description, id_dst_address, id_department, id_approvement) VALUES 
-	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 2','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),6),
-	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 3','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),7),
-	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 4','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),8);
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 2','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),8),
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 3','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),9),
+	(make_date(2020,01,18),make_date(2020,01,31),'Suspecious mission 4','Very long description of the suspecious mission',5,(SELECT id FROM department WHERE name='Transportation'),10);
 
 INSERT INTO mission_staff (id_mission, id_staff) VALUES 
 	(5,(SELECT id FROM staff WHERE firstname='Jack')),

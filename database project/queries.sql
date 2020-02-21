@@ -142,6 +142,8 @@ WHERE id=(SELECT M.id_approvement FROM mission M WHERE M.id=$MID); -- replace $S
 ---- View, create, modify, delete head of service personal information
 -- THIS WAS ALREADY DONE
 
+
+---- SPECIFIC QUERIES
 ---- Display the list of missions needing validation 
 SELECT M.id, M.name FROM mission M INNER JOIN approvement A ON M.id_approvement=A.id WHERE A.status!='V';
 

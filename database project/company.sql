@@ -1,5 +1,4 @@
 -- TODO
---- transactions
 --- diagrama entidade relacionamento
 --- modelo logico (aquele que parece com o sql, 1 linha por tabela)
 
@@ -97,6 +96,7 @@ CREATE TABLE IF NOT EXISTS mission_costs (
 	cost DECIMAL(12,2) NOT NULL DEFAULT 0, -- this data type is recomended for money
 	description VARCHAR(300) NOT NULL,
 	comments VARCHAR(300),
+	cost_date TIMESTAMP NOT NULL, -- to permit date filters on reports
 	id_mission INTEGER NOT NULL,
 	id_staff INTEGER NOT NULL
 );
@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS invoice (
 	id_mission_cost INTEGER NOT NULL,
 	attachment_path VARCHAR(64) NOT NULL UNIQUE, -- path to invoice comprovation, must be implemented on application to save the file and store the path
 	comments VARCHAR(300),
+	paid BOOLEAN DEFAULT False,
 	id_approvement INTEGER UNIQUE -- avoid 2 missions to have same autorization
 );
 
