@@ -1,5 +1,4 @@
 -- TODO
---- testar e corrigir erros
 --- script de povoamento
 --- query para calcular kilometragem do veiculo da empresa
 --- scripts de visualizacao 
@@ -28,8 +27,6 @@ CREATE TABLE IF NOT EXISTS country (
 	name VARCHAR(50) NOT NULL UNIQUE
 );
 
-ALTER TABLE address ADD CONSTRAINT FK_address_country FOREIGN KEY(id_country) REFERENCES country(id) ON DELETE CASCADE ON UPDATE CASCADE;
-
 
 CREATE SEQUENCE IF NOT EXISTS SQ_STAFF_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS staff (
@@ -49,8 +46,6 @@ CREATE TABLE IF NOT EXISTS staff (
 												'A')) -- system admin
 );
 
-ALTER TABLE staff ADD CONSTRAINT FK_staff_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
-
 
 CREATE SEQUENCE IF NOT EXISTS SQ_STAFFHOLIDAYS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS staff_holidays (
@@ -59,7 +54,7 @@ CREATE TABLE IF NOT EXISTS staff_holidays (
 	holiday DATE NOT NULL,
 	UNIQUE(id_staff,holiday)
 );
-ALTER TABLE IF NOT EXISTS staff_holidays ADD CONSTRAINT FK_staffhollidays_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 
 CREATE SEQUENCE IF NOT EXISTS SQ_SERVICE_PK INCREMENT BY 1 START WITH 1;
@@ -71,17 +66,14 @@ CREATE TABLE IF NOT EXISTS service (
 	id_manager INTEGER NOT NULL,
 	id_assistant INTEGER NOT NULL
 );
-ALTER TABLE service ADD CONSTRAINT FK_service_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service ADD CONSTRAINT FK_service_staffmanager FOREIGN KEY(id_manager) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service ADD CONSTRAINT FK_service_staffassistant FOREIGN KEY(id_assistant) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE TABLE IF NOT EXISTS service_workers (
 	id_staff INTEGER NOT NULL,
 	id_service INTEGER NOT NULL,
 	PRIMARY KEY(id_staff, id_service)
 );
-ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE SEQUENCE IF NOT EXISTS SQ_MISSION_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS mission (
@@ -93,9 +85,6 @@ CREATE TABLE IF NOT EXISTS mission (
 	id_service INTEGER NOT NULL,
 	id_autorisation INTEGER NOT NULL
 );
-ALTER TABLE mission ADD CONSTRAINT FK_mission_address FOREIGN KEY(id_dst_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission ADD CONSTRAINT FK_mission_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission ADD CONSTRAINT FK_mission_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 
 
@@ -110,7 +99,7 @@ CREATE TABLE IF NOT EXISTS autorisation (
 											'D',  -- rejected
 											'R')) -- revision requested
 );
-ALTER TABLE autorisation ADD CONSTRAINT FK_autorisation_approver FOREIGN KEY(id_checker_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 
 CREATE SEQUENCE IF NOT EXISTS SQ_MISSIONCOSTS_PK INCREMENT BY 1 START WITH 1;
@@ -122,8 +111,7 @@ CREATE TABLE IF NOT EXISTS mission_costs (
 	id_mission INTEGER NOT NULL,
 	id_staff INTEGER NOT NULL
 );
-ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE SEQUENCE IF NOT EXISTS SQ_INVOICE_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS invoice (
@@ -133,8 +121,7 @@ CREATE TABLE IF NOT EXISTS invoice (
 	comments VARCHAR(300),
 	id_autorisation INTEGER NOT NULL
 );
-ALTER TABLE invoice ADD CONSTRAINT FK_invoice_missioncost FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE invoice ADD CONSTRAINT FK_invoice_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 
 CREATE TABLE IF NOT EXISTS mission_staff (
@@ -142,15 +129,14 @@ CREATE TABLE IF NOT EXISTS mission_staff (
 	id_staff INTEGER NOT NULL,
 	PRIMARY KEY (id_mission,id_staff)
 );
-ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE SEQUENCE IF NOT EXISTS SQ_CARS_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS cars (
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_CARS_PK'),
 	chassis VARCHAR(17) NOT NULL,
 	license_plate VARCHAR(10) NOT NULL,
-	insurance_number VARCHAR(15) NOT NULL,
+	insurance_number VARCHAR(15) NOT NULL
 );
 
 CREATE SEQUENCE IF NOT EXISTS SQ_CARMAINTENANCE_PK INCREMENT BY 1 START WITH 1;
@@ -160,7 +146,6 @@ CREATE TABLE IF NOT EXISTS car_maintenance (
 	inspected_at TIMESTAMP NOT NULL,
 	description TEXT
 );
-ALTER TABLE cars_maintenance ADD CONSTRAINT FK_carmaintenance_car FOREIGN KEY(id_car) REFERENCES car(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 
 CREATE SEQUENCE IF NOT EXISTS SQ_PLANETRANSPORT_PK INCREMENT BY 1 START WITH 1;
@@ -174,7 +159,7 @@ CREATE TABLE IF NOT EXISTS plane_transport (
 	departure_at TIMESTAMP NOT NULL,
 	arrival_at TIMESTAMP NOT NULL
 );
-ALTER TABLE plane_transport ADD CONSTRAINT FK_planetransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE SEQUENCE IF NOT EXISTS SQ_TRAINTRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS train_transport (
@@ -187,7 +172,6 @@ CREATE TABLE IF NOT EXISTS train_transport (
 	departure_at TIMESTAMP NOT NULL,
 	arrival_at TIMESTAMP NOT NULL
 );
-ALTER TABLE train_transport ADD CONSTRAINT FK_traintransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 CREATE SEQUENCE IF NOT EXISTS SQ_CARRENTALTRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS car_rental_transport (
@@ -197,9 +181,9 @@ CREATE TABLE IF NOT EXISTS car_rental_transport (
 	rental_ref VARCHAR(12) NOT NULL,
 	car_reg VARCHAR(12) NOT NULL,
 	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL,
+	arrival_at TIMESTAMP NOT NULL
 );
-ALTER TABLE car_rental_transport ADD CONSTRAINT FK_carrentaltransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 
 CREATE SEQUENCE IF NOT EXISTS SQ_SERVICECARTRANSPORT_PK INCREMENT BY 1 START WITH 1;
 CREATE TABLE IF NOT EXISTS service_car_transport (
@@ -208,11 +192,48 @@ CREATE TABLE IF NOT EXISTS service_car_transport (
 	id_car INTEGER NOT NULL,
 	km_driven INTEGER NOT NULL,
 	departure_at TIMESTAMP NOT NULL,
-	arrival_at TIMESTAMP NOT NULL,
+	arrival_at TIMESTAMP NOT NULL
 );
+
+
+ALTER TABLE address ADD CONSTRAINT FK_address_country FOREIGN KEY(id_country) REFERENCES country(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE staff ADD CONSTRAINT FK_staff_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE staff_holidays ADD CONSTRAINT FK_staffhollidays_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE service ADD CONSTRAINT FK_service_address FOREIGN KEY(id_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE service ADD CONSTRAINT FK_service_staffmanager FOREIGN KEY(id_manager) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE service ADD CONSTRAINT FK_service_staffassistant FOREIGN KEY(id_assistant) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE service_workers ADD CONSTRAINT FK_serviceworkers_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE mission ADD CONSTRAINT FK_mission_address FOREIGN KEY(id_dst_address) REFERENCES address(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission ADD CONSTRAINT FK_mission_service FOREIGN KEY(id_service) REFERENCES service(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission ADD CONSTRAINT FK_mission_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE autorisation ADD CONSTRAINT FK_autorisation_approver FOREIGN KEY(id_checker_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission_costs ADD CONSTRAINT FK_missioncosts_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE invoice ADD CONSTRAINT FK_invoice_missioncost FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE invoice ADD CONSTRAINT FK_invoice_autorisation FOREIGN KEY(id_autorisation) REFERENCES autorisation(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_mission FOREIGN KEY(id_mission) REFERENCES mission(id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE mission_staff ADD CONSTRAINT FK_missionstaff_staff FOREIGN KEY(id_staff) REFERENCES staff(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE car_maintenance ADD CONSTRAINT FK_carmaintenance_car FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE plane_transport ADD CONSTRAINT FK_planetransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE train_transport ADD CONSTRAINT FK_traintransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE car_rental_transport ADD CONSTRAINT FK_carrentaltransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
+
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_missioncosts FOREIGN KEY(id_mission_cost) REFERENCES mission_costs(id) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE service_car_transport ADD CONSTRAINT FK_servicecartransport_cars FOREIGN KEY(id_car) REFERENCES cars(id) ON DELETE CASCADE ON UPDATE CASCADE;
-
 
 
 
@@ -257,6 +278,7 @@ _approver_fired_date timestamp;
 _has_head_working boolean = False;
 _checked_at timestamp;
 _id_checker_staff integer;
+row record;
 BEGIN
 	SELECT A.checked_at,A.id_checker_staff INTO _checked_at, _id_checker_staff
 	FROM autorisation A
