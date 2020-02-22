@@ -1,7 +1,3 @@
--- TODO
---- modelo logico (aquele que parece com o sql, 1 linha por tabela)
-
-
 CREATE SEQUENCE IF NOT EXISTS SQ_ADDRESS_PK INCREMENT BY 1 START WITH 1; -- auto incrementer
 CREATE TABLE IF NOT EXISTS address(
 	id INTEGER PRIMARY KEY DEFAULT NEXTVAL('SQ_ADDRESS_PK'),
